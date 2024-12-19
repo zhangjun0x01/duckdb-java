@@ -94,6 +94,7 @@ struct ParquetOptions {
 	MultiFileReaderOptions file_options;
 	vector<ParquetColumnDefinition> schema;
 	idx_t explicit_cardinality = 0;
+	vector<string> projection_columns;
 
 public:
 	void Serialize(Serializer &serializer) const;
@@ -202,8 +203,11 @@ private:
 	bool ScanInternal(ParquetReaderScanState &state, DataChunk &output);
 	unique_ptr<ColumnReader> CreateReader(ClientContext &context);
 
+	//! ECS MARK
+	bool CheckProjectionMatch(const vector<string> &project_columns, string full_name);
 	unique_ptr<ColumnReader> CreateReaderRecursive(ClientContext &context, idx_t depth, idx_t max_define,
-	                                               idx_t max_repeat, idx_t &next_schema_idx, idx_t &next_file_idx);
+	                                               idx_t max_repeat, idx_t &next_schema_idx, idx_t &next_file_idx,
+	                                               const string& parent_name);
 	const duckdb_parquet::format::RowGroup &GetGroup(ParquetReaderScanState &state);
 	uint64_t GetGroupCompressedSize(ParquetReaderScanState &state);
 	idx_t GetGroupOffset(ParquetReaderScanState &state);

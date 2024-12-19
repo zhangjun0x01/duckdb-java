@@ -396,6 +396,7 @@ public:
 		table_function.named_parameters["debug_use_openssl"] = LogicalType::BOOLEAN;
 		table_function.named_parameters["compression"] = LogicalType::VARCHAR;
 		table_function.named_parameters["explicit_cardinality"] = LogicalType::UBIGINT;
+		table_function.named_parameters["projections"] = LogicalType::LIST(LogicalType::VARCHAR);
 		table_function.named_parameters["schema"] =
 		    LogicalType::MAP(LogicalType::INTEGER, LogicalType::STRUCT({{{"name", LogicalType::VARCHAR},
 		                                                                 {"type", LogicalType::VARCHAR},
@@ -627,6 +628,14 @@ public:
 				parquet_options.explicit_cardinality = UBigIntValue::Get(kv.second);
 			} else if (loption == "encryption_config") {
 				parquet_options.encryption_config = ParquetEncryptionConfig::Create(context, kv.second);
+			} else if (loption == "projections") {
+				const auto projections = ListValue::GetChildren(kv.second);
+				if (projections.empty()) {
+					throw BinderException("Parquet projection columns cannot be empty");
+				}
+				for (const auto &column : projections) {
+					parquet_options.projection_columns.push_back(column.GetValue<std::string>());
+				}
 			}
 		}
 
