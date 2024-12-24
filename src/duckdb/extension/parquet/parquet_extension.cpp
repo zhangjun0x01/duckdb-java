@@ -401,6 +401,7 @@ public:
 		table_function.named_parameters["debug_use_openssl"] = LogicalType::BOOLEAN;
 		table_function.named_parameters["compression"] = LogicalType::VARCHAR;
 		table_function.named_parameters["explicit_cardinality"] = LogicalType::UBIGINT;
+		table_function.named_parameters["projections"] = LogicalType::LIST(LogicalType::VARCHAR);
 		table_function.named_parameters["schema"] =
 		    LogicalType::MAP(LogicalType::INTEGER, LogicalType::STRUCT({{{"name", LogicalType::VARCHAR},
 		                                                                 {"type", LogicalType::VARCHAR},
@@ -444,6 +445,14 @@ public:
 					throw BinderException("Parquet encryption_config cannot be empty!");
 				}
 				parquet_options.encryption_config = ParquetEncryptionConfig::Create(context, option.second[0]);
+			} else if (loption == "projections") {
+				const auto projections = ListValue::GetChildren(option.second[0]);
+				if (projections.empty()) {
+					throw BinderException("Parquet projection columns cannot be empty");
+				}
+				for (const auto &column : projections) {
+					parquet_options.projection_columns.push_back(column.GetValue<std::string>());
+				}
 			} else {
 				throw NotImplementedException("Unsupported option for COPY FROM parquet: %s", option.first);
 			}
